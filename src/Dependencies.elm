@@ -73,7 +73,7 @@ view model =
             text "Loading..."
 
         Success txt ->
-            case run dependency txt of
+            case run deps txt of
                 Err err ->
                     text (Debug.toString err)
 
@@ -99,36 +99,52 @@ type Gatvs
 type alias Group =
     String
 
+
 type alias Artefact =
     String
+
 
 type alias Version =
     String
 
+
 type alias Type =
     String
+
 
 type alias Scope =
     String
 
 
-parse : String -> Result (List DeadEnd) Dependency
+parse : String -> Result (List DeadEnd) (List Dependency)
 parse s =
-    run dependency s
+    run deps s
 
 
 
 -- PARSER
 
+deps =
+    loop [] depsHelp
 
-dependency : Parser Dependency
-dependency =
-    succeed Dependency
-        |. chompUntil "+-"
-        |. token "+-"
-        |. spaces
-        |= parseGatvs
-
+depsHelp revDeps = 
+ oneOf
+    [ succeed (\dep -> Loop (Dependency dep :: revDeps))
+                |. chompUntil "+-"
+                |. token "+-"
+                |. spaces
+                |= parseGatvs
+    , succeed (\dep -> Loop (Transient dep :: revDeps))
+                |. chompUntil "|  "
+                |. token "|  "
+                |. symbol "\\-"
+                |. spaces
+                |= parseGatvs
+    , succeed ()
+        |> map (\_ -> Done (List.reverse revDeps))
+    ]
+    
+    
 
 parseGatvs =
     succeed Gatvs
@@ -142,21 +158,25 @@ parseGatvs =
         |. symbol ":"
         |= var
 
+
 var : Parser String
 var =
-  getChompedString <|
-    succeed ()
-      |. chompIf isStartChar
-      |. chompWhile isInnerChar
+    getChompedString <|
+        succeed ()
+            |. chompIf isStartChar
+            |. chompWhile isInnerChar
+
 
 isStartChar : Char -> Bool
 isStartChar char =
-  Char.isAlpha char || Char.isDigit char
+    Char.isAlpha char || Char.isDigit char
+
 
 isInnerChar : Char -> Bool
 isInnerChar char =
-  isStartChar char || Char.isDigit char || char == '.' || char == '-'
-  
+    isStartChar char || Char.isDigit char || char == '.' || char == '-'
+
+
 mavenPrefix =
     keyword "[INFO] "
 
