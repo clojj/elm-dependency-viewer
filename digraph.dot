@@ -1,0 +1,4 @@
+digraph "com.github.librepdf:openpdf:jar:1.3.27-SNAPSHOT" {
+ "a" -> "b" -> "c" ; 
+	"b" -> "com.github.librepdf:openpdf:jar:1.3.27-SNAPSHOT-4" ;
+}

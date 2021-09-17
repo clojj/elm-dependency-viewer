@@ -7,6 +7,7 @@ import Browser
 import Html exposing (Html, div, p, pre, text)
 import Http
 import Parser exposing (..)
+import DotLang
 
 
 
@@ -32,7 +33,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading
     , Http.get
-        { url = "http://127.0.0.1:8080/maven-snippet.txt"
+        { url = "http://127.0.0.1:8000/digraph.dot"
         , expect = Http.expectString GotText
         }
     )
@@ -73,7 +74,7 @@ view model =
             text "Loading..."
 
         Success txt ->
-            case run deps txt of
+            case DotLang.fromString txt of
                 Err err ->
                     text (Debug.toString err)
 
